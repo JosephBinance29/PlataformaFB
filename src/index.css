@@ -1,0 +1,89 @@
+/* src/index.css */
+
+/* --- ESTILOS BASE (ESCRITORIO) --- */
+body {
+  background-color: #282c34;
+  color: white;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Contenedor principal de la App */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Tarjetas genéricas */
+.card {
+  background: #333742;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+/* Títulos */
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0;
+}
+
+/* Botones */
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 15px;
+  font-size: 1em;
+  background-color: #61dafb;
+  color: #282c34;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #4fa8c5;
+}
+
+/* --- MEDIA QUERY PARA MÓVILES Y TABLETS (PANTALLAS < 768px) --- */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 10px; /* Menos padding en móvil */
+  }
+
+  /* Hacemos que los grids de formularios se pongan en una sola columna */
+  form > div {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Ajustamos la ficha del jugador para que sea vertical */
+  .player-card-normal-view {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 15px !important;
+  }
+
+  .player-card-normal-view > div:last-child {
+    text-align: left !important;
+    width: 100%;
+    display: flex;
+    gap: 10px;
+  }
+  
+  .player-card-normal-view > div:last-child button {
+    flex-grow: 1; /* Los botones ocupan todo el ancho disponible */
+  }
+
+  /* Hacemos que las columnas de eventos se pongan una encima de la otra */
+  .events-columns {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Hacemos que los gráficos del dashboard se pongan en una sola columna */
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
