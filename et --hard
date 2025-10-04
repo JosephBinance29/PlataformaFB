@@ -1,0 +1,10 @@
+[33m3cf5191[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Revert: Volviendo a una versión estable de DetalleEvento
+[33mcbe778c[m Fix: Solución definitiva para carga de eventos y fechas
+[33m5661a87[m Fix: Lógica final y estable para DetalleEvento
+[33m8eb8768[m Fix: Corrección final de mayúsculas en DetalleEvento
+[33m015e8c9[m Fix: Lógica completa y corregida para DetalleEvento
+[33m41b7a3f[m Fix: Revertir estadísticas de jugador al eliminar un evento
+[33md24856b[m Añadir configuración de rewrites para Vercel
+[33me047299[m Añadir .env.local a gitignore y asegurar claves
+[33mc6656c8[m Versión 1.0: MVP completo listo para despliegue
+[33ma5599cd[m Initial commit: Creación del proyecto de plataforma de fútbol
