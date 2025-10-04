@@ -87,3 +87,78 @@ button:hover {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* --- ESTILOS PARA LA PÁGINA DE LOGIN --- */
+
+/* Contenedor que ocupa toda la pantalla y centra el contenido */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh; /* Ocupa toda la altura de la pantalla */
+  background-color: #282c34; /* Mismo fondo que el resto de la app */
+  padding: 20px;
+}
+
+/* La caja blanca/gris del formulario */
+.login-box {
+  background-color: #3a3f4a;
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 400px; /* Ancho máximo del formulario */
+  text-align: center;
+}
+
+.login-box h2 {
+  margin-top: 0;
+  margin-bottom: 30px;
+  color: #fff;
+}
+
+/* El formulario en sí */
+.login-box form {
+  display: flex;
+  flex-direction: column; /* Apila los elementos verticalmente */
+  gap: 15px; /* Espacio entre los campos */
+}
+
+/* Estilos para los campos de texto (email, contraseña) */
+.login-box input {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #555;
+  background-color: #282c34;
+  color: #fff;
+  border-radius: 5px;
+  font-size: 1em;
+}
+
+/* Estilos para el botón principal */
+.login-box form button {
+  padding: 15px;
+  border: none;
+  border-radius: 5px;
+  background-color: #61dafb;
+  color: #282c34;
+  font-weight: bold;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.login-box form button:hover {
+  background-color: #88eaff;
+}
+
+/* Estilos para el botón secundario (cambiar entre login/registro) */
+.toggle-auth {
+  background: none;
+  border: none;
+  color: #61dafb;
+  cursor: pointer;
+  margin-top: 25px;
+  padding: 10px;
+  font-size: 0.9em;
+}

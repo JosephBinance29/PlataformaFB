@@ -1,139 +1,118 @@
 // src/pages/Eventos.jsx
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { db } from '../firebase';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, addDoc, getDocs } from 'firebase/firestore';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function Eventos() {
-  const [todosLosEventos, setTodosLosEventos] = useState([]);
-  const [eventosFiltrados, setEventosFiltrados] = useState([]);
-  const [filtroActivo, setFiltroActivo] = useState('Todos');
-
-  // Estados para el formulario (sin cambios)
-  const [tipo, setTipo] = useState('Partido');
-  const [fecha, setFecha] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [condicion, setCondicion] = useState('Local');
-  const [resumen, setResumen] = useState('');
-
-  const eventosCollectionRef = collection(db, 'eventos');
-
-  const obtenerEventos = async () => {
-    const data = await getDocs(eventosCollectionRef);
-    const listaEventos = data.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    listaEventos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-    setTodosLosEventos(listaEventos);
-  };
+  const [eventos, setEventos] = useState([]);
+  const [filtro, setFiltro] = useState('Todos');
+  const [nuevoEvento, setNuevoEvento] = useState({ tipo: 'Partido', descripcion: '', fecha: '', condicion: 'Local' });
+  const { currentUser } = useAuth();
 
   useEffect(() => {
-    if (filtroActivo === 'Todos') {
-      setEventosFiltrados(todosLosEventos);
-    } else {
-      const filtrados = todosLosEventos.filter(evento => evento.tipo === filtroActivo);
-      setEventosFiltrados(filtrados);
-    }
-  }, [filtroActivo, todosLosEventos]);
+    const obtenerEventos = async () => {
+      if (currentUser) {
+        const q = query(collection(db, 'eventos'), where("userId", "==", currentUser.uid), orderBy('fecha', 'desc'));
+        const data = await getDocs(q);
+        setEventos(data.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }
+    };
+    obtenerEventos();
+  }, [currentUser]);
 
   const crearEvento = async (e) => {
     e.preventDefault();
-    await addDoc(eventosCollectionRef, { tipo, fecha, descripcion, condicion: tipo === 'Partido' ? condicion : null, resumen: resumen || null, valoracion_colectiva: null });
-    setTipo('Partido'); setFecha(''); setDescripcion(''); setCondicion('Local'); setResumen('');
-    obtenerEventos();
+    if (!nuevoEvento.descripcion || !nuevoEvento.fecha || !currentUser) return;
+    
+    // 1. Añadimos el nuevo evento a la base de datos
+    await addDoc(collection(db, 'eventos'), {
+      ...nuevoEvento,
+      userId: currentUser.uid,
+      valoracion_colectiva: 0,
+      puntos_obtenidos: -1,
+    });
+
+    // 2. Limpiamos el formulario
+    setNuevoEvento({ tipo: 'Partido', descripcion: '', fecha: '', condicion: 'Local' });
+
+    // 3. ¡CORRECCIÓN! Volvemos a pedir la lista actualizada de eventos para refrescar la pantalla
+    const q = query(collection(db, 'eventos'), where("userId", "==", currentUser.uid), orderBy('fecha', 'desc'));
+    const data = await getDocs(q);
+    setEventos(data.docs.map(doc => ({ id: doc.id, ...doc.data() })));
   };
 
-  useEffect(() => {
-    obtenerEventos();
-  }, []);
+  const eventosFiltrados = eventos.filter(evento => {
+    if (filtro === 'Todos') return true;
+    return evento.tipo === filtro;
+  });
 
-  // Función para renderizar una tarjeta de evento individual
-  const renderEventoCard = (evento) => (
-    <Link to={`/evento/${evento.id}`} key={evento.id} style={{ textDecoration: 'none', color: 'inherit' }}>
-      <div style={{ background: '#333742', padding: '20px', borderRadius: '8px', cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1em' }}>{evento.tipo}: {evento.descripcion}</h3>
-            {evento.valoracion_colectiva && (
-              <div style={{ background: '#4CAF50', color: 'white', padding: '5px 10px', borderRadius: '5px', fontWeight: 'bold' }}>
-                {evento.valoracion_colectiva.toFixed(2)}/10
-              </div>
-            )}
-          </div>
-        </div>
-        <p style={{ color: '#ccc', marginTop: '10px', marginBottom: 0 }}>{evento.fecha}</p>
-      </div>
-    </Link>
-  );
-
-  // ¡LÓGICA CORREGIDA! Se ejecuta solo cuando es necesario
-  const getPartidosPorCondicion = () => {
-    const partidosLocal = eventosFiltrados.filter(e => e.condicion === 'Local');
-    const partidosVisitante = eventosFiltrados.filter(e => e.condicion === 'Visitante');
-    return { partidosLocal, partidosVisitante };
-  };
+  const partidosLocal = eventosFiltrados.filter(e => e.tipo === 'Partido' && e.condicion === 'Local');
+  const partidosVisitante = eventosFiltrados.filter(e => e.tipo === 'Partido' && e.condicion === 'Visitante');
 
   return (
     <div style={{ fontFamily: 'sans-serif' }}>
-      {/* Formulario (sin cambios) */}
-      <div style={{ background: '#333742', padding: '20px', borderRadius: '8px', marginBottom: '30px' }}>
-        <h2>Registrar Nuevo Evento</h2>
-        {/* ... (el JSX del formulario es el mismo) ... */}
-        <form onSubmit={crearEvento}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-            <select value={tipo} onChange={(e) => setTipo(e.target.value)} style={{ padding: '10px' }}>
-              <option value="Partido">Partido</option>
-              <option value="Entrenamiento">Entrenamiento</option>
+      <div className="card">
+        <h2>Crear Nuevo Evento</h2>
+        <form onSubmit={crearEvento} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', alignItems: 'flex-end' }}>
+          <select value={nuevoEvento.tipo} onChange={e => setNuevoEvento({ ...nuevoEvento, tipo: e.target.value })}>
+            <option value="Partido">Partido</option>
+            <option value="Entrenamiento">Entrenamiento</option>
+          </select>
+          <input value={nuevoEvento.descripcion} onChange={e => setNuevoEvento({ ...nuevoEvento, descripcion: e.target.value })} placeholder={nuevoEvento.tipo === 'Partido' ? 'vs Rival' : 'Descripción'} required />
+          <input value={nuevoEvento.fecha} onChange={e => setNuevoEvento({ ...nuevoEvento, fecha: e.target.value })} type="date" required />
+          {nuevoEvento.tipo === 'Partido' && (
+            <select value={nuevoEvento.condicion} onChange={e => setNuevoEvento({ ...nuevoEvento, condicion: e.target.value })}>
+              <option value="Local">Local</option>
+              <option value="Visitante">Visitante</option>
             </select>
-            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} required style={{ padding: '10px' }} />
-            <input placeholder="Descripción (ej. vs Real Madrid)" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} required style={{ padding: '10px' }} />
-            {tipo === 'Partido' && (
-              <select value={condicion} onChange={(e) => setCondicion(e.target.value)} style={{ padding: '10px' }}>
-                <option value="Local">Local</option>
-                <option value="Visitante">Visitante</option>
-              </select>
-            )}
-          </div>
-          <textarea placeholder="Resumen o notas clave del evento..." value={resumen} onChange={(e) => setResumen(e.target.value)} style={{ width: '100%', padding: '10px', marginTop: '15px', minHeight: '80px' }} />
-          <button type="submit" style={{ marginTop: '15px', padding: '10px 20px', fontSize: '1.1em', cursor: 'pointer' }}>Crear Evento</button>
+          )}
+          <button type="submit" style={{ gridColumn: '1 / -1' }}>Crear Evento</button>
         </form>
       </div>
 
-      {/* Historial de Eventos con Filtros y Estilos Mejorados */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '2em' }}>Historial de Eventos</h1>
-
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '40px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <h2 style={{ margin: 0 }}>Historial de Eventos</h2>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={() => setFiltroActivo('Todos')} style={{ padding: '8px 15px', background: filtroActivo === 'Todos' ? '#4CAF50' : '#555', border: 'none', color: 'white', cursor: 'pointer', borderRadius: '5px' }}>Todos</button>
-          <button onClick={() => setFiltroActivo('Partido')} style={{ padding: '8px 15px', background: filtroActivo === 'Partido' ? '#4CAF50' : '#555', border: 'none', color: 'white', cursor: 'pointer', borderRadius: '5px' }}>Partidos</button>
-          <button onClick={() => setFiltroActivo('Entrenamiento')} style={{ padding: '8px 15px', background: filtroActivo === 'Entrenamiento' ? '#4CAF50' : '#555', border: 'none', color: 'white', cursor: 'pointer', borderRadius: '5px' }}>Entrenamientos</button>
+          <button onClick={() => setFiltro('Todos')} style={{ background: filtro === 'Todos' ? '#61dafb' : '#555' }}>Todos</button>
+          <button onClick={() => setFiltro('Partido')} style={{ background: filtro === 'Partido' ? '#61dafb' : '#555' }}>Partidos</button>
+          <button onClick={() => setFiltro('Entrenamiento')} style={{ background: filtro === 'Entrenamiento' ? '#61dafb' : '#555' }}>Entrenamientos</button>
         </div>
       </div>
-      <hr style={{ borderColor: '#444', marginBottom: '20px' }} />
 
-      {/* ¡RENDERIZADO CORREGIDO! */}
-      {filtroActivo === 'Partido' ? (
-        // Vista de dos columnas para Partidos
-        <div style={{ display: 'flex', gap: '30px' }}>
-          <div style={{ flex: 1 }}>
-            <h2 style={{ textAlign: 'center' }}>Local</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              {getPartidosPorCondicion().partidosLocal.map(evento => renderEventoCard(evento))}
-            </div>
-          </div>
-          <div style={{ flex: 1 }}>
-            <h2 style={{ textAlign: 'center' }}>Visitante</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              {getPartidosPorCondicion().partidosVisitante.map(evento => renderEventoCard(evento))}
-            </div>
-          </div>
+      {filtro === 'Partido' ? (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div><h3>Local</h3>{partidosLocal.map(evento => <CardEvento key={evento.id} evento={evento} />)}</div>
+          <div><h3>Visitante</h3>{partidosVisitante.map(evento => <CardEvento key={evento.id} evento={evento} />)}</div>
         </div>
       ) : (
-        // Vista de rejilla para 'Todos' y 'Entrenamientos'
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-          {eventosFiltrados.map(evento => renderEventoCard(evento))}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+          {eventosFiltrados.map(evento => <CardEvento key={evento.id} evento={evento} />)}
         </div>
       )}
     </div>
+  );
+}
+
+function CardEvento({ evento }) {
+  const resultado = evento.puntos_obtenidos !== -1 && evento.puntos_obtenidos !== undefined ? `${evento.goles_favor} - ${evento.goles_contra}` : '';
+  return (
+    <Link to={`/evento/${evento.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h4>{evento.tipo === 'Partido' ? `vs ${evento.descripcion}` : evento.descripcion}</h4>
+          {resultado && <span style={{ fontWeight: 'bold' }}>{resultado}</span>}
+        </div>
+        <p>{new Date(evento.fecha).toLocaleDateString()} {evento.tipo === 'Partido' ? `(${evento.condicion})` : ''}</p>
+        {evento.valoracion_colectiva > 0 && (
+          <div style={{ background: '#4CAF50', color: 'white', padding: '5px 10px', borderRadius: '5px', textAlign: 'center', marginTop: '10px' }}>
+            Valoración: {evento.valoracion_colectiva.toFixed(2)}/10
+          </div>
+        )}
+      </div>
+    </Link>
   );
 }
 

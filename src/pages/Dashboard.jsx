@@ -2,130 +2,252 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { Bar, Line, Radar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, RadialLinearScale, Filler } from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, RadialLinearScale, Filler, Tooltip, Legend } from 'chart.js';
+import { useAuth } from '../context/AuthContext';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, RadialLinearScale, Filler);
+ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, RadialLinearScale, Filler, Tooltip, Legend);
 
-function Dashboard() {
-  const [jugadores, setJugadores] = useState([]);
-  const [eventosColectivos, setEventosColectivos] = useState([]); // Renombrado para claridad
+// --- ESTRUCTURA DE DATOS INICIAL PARA LOS GRÁFICOS ---
+// Esto evita que la librería se rompa al inicio.
+const initialChartData = {
+  labels: [],
+  datasets: [{
+    label: 'Cargando...',
+    data: [],
+    backgroundColor: 'rgba(97, 218, 251, 0.6)',
+  }]
+};
+
+// --- COMPONENTES DEL DASHBOARD REVISADOS ---
+
+function TablaTemporada() {
+  const { currentUser } = useAuth();
+  const [stats, setStats] = useState({ pj: 0, v: 0, e: 0, d: 0, gf: 0, gc: 0, dg: 0, pts: 0 });
   const [loading, setLoading] = useState(true);
 
-  const [jugadorSeleccionadoId, setJugadorSeleccionadoId] = useState('');
-  const [evaluacionesJugador, setEvaluacionesJugador] = useState([]);
-  const [loadingPerfil, setLoadingPerfil] = useState(false);
+  useEffect(() => {
+    if (!currentUser) return;
+    const calcularEstadisticas = async () => {
+      const q = query(collection(db, 'eventos'), where('userId', '==', currentUser.uid), where('tipo', '==', 'Partido'), where('puntos_obtenidos', 'in', [0, 1, 3]));
+      const querySnapshot = await getDocs(q);
+      let pj = 0, v = 0, e = 0, d = 0, gf = 0, gc = 0, pts = 0;
+      querySnapshot.forEach(doc => {
+        const partido = doc.data();
+        pj++;
+        gf += partido.goles_favor || 0;
+        gc += partido.goles_contra || 0;
+        pts += partido.puntos_obtenidos || 0;
+        if (partido.puntos_obtenidos === 3) v++;
+        else if (partido.puntos_obtenidos === 1) e++;
+        else d++;
+      });
+      setStats({ pj, v, e, d, gf, gc, dg: gf - gc, pts });
+      setLoading(false);
+    };
+    calcularEstadisticas();
+  }, [currentUser]);
+
+  if (loading) return <div className="card">Cargando estadísticas...</div>;
+  return (
+    <div className="card" style={{ gridColumn: '1 / -1' }}>
+      <h2>Rendimiento de la Temporada</h2>
+      <table width="100%" style={{ textAlign: 'center', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ borderBottom: '1px solid #666' }}>
+            <th style={{ padding: '10px' }}>PJ</th><th>V</th><th>E</th><th>D</th><th>GF</th><th>GC</th><th>DG</th><th>Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style={{ padding: '10px', fontSize: '1.2em', fontWeight: 'bold' }}>{stats.pj}</td>
+            <td style={{ fontSize: '1.2em' }}>{stats.v}</td><td style={{ fontSize: '1.2em' }}>{stats.e}</td><td style={{ fontSize: '1.2em' }}>{stats.d}</td>
+            <td style={{ fontSize: '1.2em' }}>{stats.gf}</td><td style={{ fontSize: '1.2em' }}>{stats.gc}</td><td style={{ fontSize: '1.2em' }}>{stats.dg}</td>
+            <td style={{ fontSize: '1.2em', fontWeight: 'bold' }}>{stats.pts}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function RankingGoles() {
+  const { currentUser } = useAuth();
+  const [chartData, setChartData] = useState(initialChartData);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const obtenerDatosGenerales = async () => {
-      setLoading(true);
-      try {
-        // Obtener jugadores (sin cambios)
-        const jugadoresSnapshot = await getDocs(collection(db, 'jugadores'));
-        const listaJugadores = jugadoresSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setJugadores(listaJugadores);
-        if (listaJugadores.length > 0) {
-          setJugadorSeleccionadoId(listaJugadores[0].id);
-        }
-
-        // --- ¡NUEVA LÓGICA A PRUEBA DE FALLOS! ---
-        // 1. Traemos TODOS los eventos
-        const eventosSnapshot = await getDocs(collection(db, "eventos"));
-        const todosLosEventos = eventosSnapshot.docs.map(doc => doc.data());
-
-        // 2. Filtramos y ordenamos en JavaScript
-        const eventosConValoracion = todosLosEventos
-          .filter(evento => evento.valoracion_colectiva != null && evento.valoracion_colectiva > 0)
-          .sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // Ordenamos por fecha
-
-        setEventosColectivos(eventosConValoracion);
-        // -----------------------------------------
-
-      } catch (error) {
-        console.error("Error obteniendo datos para el dashboard:", error);
+    if (!currentUser) return;
+    const fetchJugadores = async () => {
+      const q = query(collection(db, 'jugadores'), where('userId', '==', currentUser.uid), orderBy('total_goles', 'desc'));
+      const data = await getDocs(q);
+      const jugadores = data.docs.map(doc => doc.data());
+      if (jugadores.length > 0) {
+        setChartData({
+          labels: jugadores.map(j => j.nombre),
+          datasets: [{ label: 'Goles Totales', data: jugadores.map(j => j.total_goles), backgroundColor: 'rgba(97, 218, 251, 0.6)' }]
+        });
+      } else {
+        setChartData({ ...initialChartData, datasets: [{ ...initialChartData.datasets[0], label: 'Sin datos' }] });
       }
       setLoading(false);
     };
-    obtenerDatosGenerales();
-  }, []);
+    fetchJugadores();
+  }, [currentUser]);
+
+  if (loading) return <div>Cargando...</div>;
+  return <Bar data={chartData} options={{ maintainAspectRatio: false }} />;
+}
+
+function RankingAsistencias() {
+  const { currentUser } = useAuth();
+  const [chartData, setChartData] = useState(initialChartData);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!jugadorSeleccionadoId) return;
-    const obtenerEvaluaciones = async () => {
-      setLoadingPerfil(true);
-      const q = query(collection(db, "evaluaciones"), where("id_jugador", "==", jugadorSeleccionadoId), orderBy("fecha_evento", "desc"));
-      const querySnapshot = await getDocs(q);
-      setEvaluacionesJugador(querySnapshot.docs.map(doc => doc.data()));
-      setLoadingPerfil(false);
+    if (!currentUser) return;
+    const fetchJugadores = async () => {
+      const q = query(collection(db, 'jugadores'), where('userId', '==', currentUser.uid), orderBy('total_asistencias', 'desc'));
+      const data = await getDocs(q);
+      const jugadores = data.docs.map(doc => doc.data());
+      if (jugadores.length > 0) {
+        setChartData({
+          labels: jugadores.map(j => j.nombre),
+          datasets: [{ label: 'Asistencias Totales', data: jugadores.map(j => j.total_asistencias), backgroundColor: 'rgba(76, 175, 80, 0.6)' }]
+        });
+      } else {
+        setChartData({ ...initialChartData, datasets: [{ ...initialChartData.datasets[0], label: 'Sin datos' }] });
+      }
+      setLoading(false);
     };
-    obtenerEvaluaciones();
-  }, [jugadorSeleccionadoId]);
+    fetchJugadores();
+  }, [currentUser]);
 
-  // --- Preparación de datos (sin cambios, pero ahora usamos 'eventosColectivos') ---
-  const rankingGolesData = !loading && jugadores.length > 0 ? {
-    labels: [...jugadores].sort((a, b) => b.total_goles - a.total_goles).map(j => `${j.nombre} ${j.apellidos}`),
-    datasets: [{ label: 'Goles Totales', data: [...jugadores].sort((a, b) => b.total_goles - a.total_goles).map(j => j.total_goles), backgroundColor: 'rgba(75, 192, 192, 0.6)' }]
-  } : { labels: [], datasets: [] };
+  if (loading) return <div>Cargando...</div>;
+  return <Bar data={chartData} options={{ maintainAspectRatio: false }} />;
+}
 
-  const rankingAsistenciasData = !loading && jugadores.length > 0 ? {
-    labels: [...jugadores].sort((a, b) => b.total_asistencias - a.total_asistencias).map(j => `${j.nombre} ${j.apellidos}`),
-    datasets: [{ label: 'Asistencias Totales', data: [...jugadores].sort((a, b) => b.total_asistencias - a.total_asistencias).map(j => j.total_asistencias), backgroundColor: 'rgba(54, 162, 235, 0.6)' }]
-  } : { labels: [], datasets: [] };
+function PerfilJugador() {
+  const { currentUser } = useAuth();
+  const [jugadores, setJugadores] = useState([]);
+  const [jugadorSeleccionado, setJugadorSeleccionado] = useState('');
+  const [chartData, setChartData] = useState(null); // Usamos null aquí para un control más explícito
 
-  const evolucionColectivaData = !loading && eventosColectivos.length > 0 ? {
-    labels: eventosColectivos.map(e => `${e.fecha} (${e.descripcion.substring(0, 10)}...)`),
-    datasets: [{ label: 'Valoración Colectiva', data: eventosColectivos.map(e => e.valoracion_colectiva), fill: true, backgroundColor: 'rgba(75, 192, 192, 0.2)', borderColor: 'rgba(75, 192, 192, 1)', tension: 0.1 }]
-  } : { labels: [], datasets: [] };
+  useEffect(() => {
+    if (!currentUser) return;
+    const fetchJugadores = async () => {
+      const q = query(collection(db, 'jugadores'), where('userId', '==', currentUser.uid));
+      const data = await getDocs(q);
+      setJugadores(data.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    };
+    fetchJugadores();
+  }, [currentUser]);
 
-  const ultimaEvaluacion = evaluacionesJugador.length > 0 ? evaluacionesJugador[0] : null;
-  const perfilJugadorData = {
-    labels: ['Técnica', 'Físico', 'Táctica', 'Actitud'],
-    datasets: [{
-      label: `Valoración más reciente (${ultimaEvaluacion?.fecha_evento || 'N/A'})`,
-      data: ultimaEvaluacion ? [ultimaEvaluacion.tecnica, ultimaEvaluacion.fisico, ultimaEvaluacion.tactica, ultimaEvaluacion.actitud] : [0, 0, 0, 0],
-      backgroundColor: 'rgba(54, 162, 235, 0.2)',
-      borderColor: 'rgba(54, 162, 235, 1)',
-      borderWidth: 1,
-    }]
-  };
+  useEffect(() => {
+    if (jugadorSeleccionado && currentUser) {
+      const fetchEvaluacion = async () => {
+        const q = query(
+          collection(db, 'evaluaciones'),
+          where('id_jugador', '==', jugadorSeleccionado),
+          where('userId', '==', currentUser.uid),
+          orderBy('fecha_evento', 'desc'),
+          limit(1)
+        );
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const ultimaEval = querySnapshot.docs[0].data();
+          setChartData({
+            labels: ['Técnica', 'Físico', 'Táctica', 'Actitud'],
+            datasets: [{
+              label: `Valoración más reciente (${new Date(ultimaEval.fecha_evento).toLocaleDateString()})`,
+              data: [ultimaEval.tecnica || 0, ultimaEval.fisico || 0, ultimaEval.tactica || 0, ultimaEval.actitud || 0],
+              backgroundColor: 'rgba(97, 218, 251, 0.2)',
+              borderColor: 'rgba(97, 218, 251, 1)',
+              borderWidth: 1,
+            }]
+          });
+        } else {
+          setChartData(null);
+        }
+      };
+      fetchEvaluacion();
+    } else {
+      setChartData(null);
+    }
+  }, [jugadorSeleccionado, currentUser]);
 
-  const chartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: 'white' } } }, scales: { x: { ticks: { color: 'white' } }, y: { ticks: { color: 'white' }, beginAtZero: true } } };
-  const chartOptionsLine = { ...chartOptions, scales: { ...chartOptions.scales, y: { ...chartOptions.scales.y, max: 10 } } };
-  const chartOptionsRadar = { ...chartOptions, scales: { r: { angleLines: { color: 'rgba(255, 255, 255, 0.2)' }, grid: { color: 'rgba(255, 255, 255, 0.2)' }, pointLabels: { color: 'white', font: { size: 14 } }, suggestedMin: 0, suggestedMax: 10, ticks: { display: false } } } };
+  return (
+    <div>
+      <select value={jugadorSeleccionado} onChange={e => setJugadorSeleccionado(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '10px' }}>
+        <option value="">Selecciona un jugador...</option>
+        {jugadores.map(j => <option key={j.id} value={j.id}>{j.nombre} {j.apellidos}</option>)}
+      </select>
+      {/* ¡RENDERIZADO CONDICIONAL! Solo muestra el gráfico si chartData no es nulo */}
+      {chartData ? <Radar data={chartData} /> : <p>Selecciona un jugador para ver su perfil o evalúalo en un evento.</p>}
+    </div>
+  );
+}
 
-  if (loading) return <h1>Cargando datos del Dashboard...</h1>;
+function EvolucionColectiva() {
+  const { currentUser } = useAuth();
+  const [chartData, setChartData] = useState(null); // Usamos null para control explícito
 
+  useEffect(() => {
+    if (!currentUser) return;
+    const fetchEvolucion = async () => {
+      const q = query(
+        collection(db, 'eventos'),
+        where('userId', '==', currentUser.uid),
+        where('valoracion_colectiva', '>', 0),
+        orderBy('fecha', 'asc')
+      );
+      const querySnapshot = await getDocs(q);
+      if (querySnapshot.docs.length > 1) {
+        const eventos = querySnapshot.docs.map(doc => doc.data());
+        setChartData({
+          labels: eventos.map(e => new Date(e.fecha).toLocaleDateString()),
+          datasets: [{
+            label: 'Valoración Colectiva',
+            data: eventos.map(e => e.valoracion_colectiva),
+            fill: false,
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+          }]
+        });
+      } else {
+        setChartData(null);
+      }
+    };
+    fetchEvolucion();
+  }, [currentUser]);
+
+  // ¡RENDERIZADO CONDICIONAL!
+  if (!chartData) return <p>No hay suficientes datos. Evalúa al menos dos eventos para ver la evolución.</p>;
+  return <Line data={chartData} />;
+}
+
+function Dashboard() {
   return (
     <div style={{ fontFamily: 'sans-serif' }}>
       <h1>Dashboard de Rendimiento</h1>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
-        <div style={{ background: '#333742', padding: '20px', borderRadius: '8px', height: '400px' }}>
-          <h3 style={{ marginTop: 0 }}>Ranking de Goleadores</h3>
-          <Bar data={rankingGolesData} options={chartOptions} />
+      <TablaTemporada />
+      <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '20px' }}>
+        <div className="card">
+          <h2>Ranking de Goleadores</h2>
+          <div style={{ height: '300px' }}><RankingGoles /></div>
         </div>
-        <div style={{ background: '#333742', padding: '20px', borderRadius: '8px', height: '400px' }}>
-          <h3 style={{ marginTop: 0 }}>Ranking de Asistencias</h3>
-          <Bar data={rankingAsistenciasData} options={chartOptions} />
+        <div className="card">
+          <h2>Ranking de Asistencias</h2>
+          <div style={{ height: '300px' }}><RankingAsistencias /></div>
         </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-        <div style={{ background: '#333742', padding: '20px', borderRadius: '8px', height: '450px' }}>
-          <h3 style={{ marginTop: 0 }}>Perfil de Jugador</h3>
-          <select value={jugadorSeleccionadoId} onChange={(e) => setJugadorSeleccionadoId(e.target.value)} style={{ marginBottom: '20px', width: '100%', padding: '10px' }}>
-            {jugadores.map(j => <option key={j.id} value={j.id}>{j.nombre} {j.apellidos}</option>)}
-          </select>
-          {loadingPerfil ? <p>Cargando perfil...</p> : <Radar data={perfilJugadorData} options={chartOptionsRadar} />}
+        <div className="card">
+          <h2>Perfil de Jugador</h2>
+          <PerfilJugador />
         </div>
-
-        <div style={{ background: '#333742', padding: '20px', borderRadius: '8px', height: '450px' }}>
-          <h3 style={{ marginTop: 0 }}>Evolución del Rendimiento Colectivo</h3>
-          {eventosColectivos.length > 0 ? (
-            <Line data={evolucionColectivaData} options={chartOptionsLine} />
-          ) : (
-            <p>No hay datos de valoración colectiva para mostrar el gráfico.</p>
-          )}
+        <div className="card">
+          <h2>Evolución del Rendimiento Colectivo</h2>
+          <EvolucionColectiva />
         </div>
       </div>
     </div>
