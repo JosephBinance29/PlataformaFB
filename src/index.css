@@ -1,164 +1,499 @@
-/* src/index.css */
+/* =================================================================== */
+/* ESTILOS GLOBALES Y RESET                                            */
+/* =================================================================== */
 
-/* --- ESTILOS BASE (ESCRITORIO) --- */
+/* Reseteo básico y configuración de la fuente */
 body {
-  background-color: #282c34;
-  color: white;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #282c34;
+  color: white;
 }
 
-/* Contenedor principal de la App */
-.app-container {
+/* Contenedor principal de la aplicación */
+/* En lugar de #root, usamos una clase para tener más control */
+.container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
-}
-
-/* Tarjetas genéricas */
-.card {
-  background: #333742;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  padding: 0 2rem; /* Padding solo a los lados */
 }
 
 /* Títulos */
 h1, h2, h3, h4, h5, h6 {
   margin-top: 0;
+  color: #f0f0f0;
 }
 
-/* Botones */
+/* Tarjetas genéricas */
+.card {
+  background: #333742;
+  padding: 2rem;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: left; /* Alineamos el texto a la izquierda por defecto en las tarjetas */
+}
+
+/* Botones genéricos */
 button {
   cursor: pointer;
   border: none;
   border-radius: 5px;
   padding: 10px 15px;
   font-size: 1em;
+  font-weight: bold;
   background-color: #61dafb;
   color: #282c34;
-  transition: background-color 0.3s;
+  transition: background-color 0.2s, transform 0.1s;
 }
 
 button:hover {
-  background-color: #4fa8c5;
+  background-color: #88eaff;
 }
 
-/* --- MEDIA QUERY PARA MÓVILES Y TABLETS (PANTALLAS < 768px) --- */
-@media (max-width: 768px) {
-  .app-container {
-    padding: 10px; /* Menos padding en móvil */
+button:active {
+  transform: scale(0.98);
+}
+
+/* =================================================================== */
+/* BARRA DE NAVEGACIÓN (NAVBAR)                                        */
+/* =================================================================== */
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #20232a;
+  border-bottom: 1px solid #444;
+  margin-bottom: 2rem;
+}
+
+.nav-links {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-links a {
+  color: #ccc;
+  text-decoration: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  transition: background-color 0.2s, color 0.2s;
+  font-weight: 500;
+}
+
+.nav-links a:hover {
+  background-color: #333;
+  color: white;
+}
+
+.nav-links a.active {
+  background-color: #61dafb;
+  color: #20232a;
+  font-weight: bold;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.user-email {
+  color: #aaa;
+  font-size: 0.9em;
+}
+
+.logout-button {
+  background-color: #c0392b;
+  color: white;
+}
+
+.logout-button:hover {
+  background-color: #e74c3c;
+}
+
+/* =================================================================== */
+/* PÁGINA DE CONFIGURACIÓN                                             */
+/* =================================================================== */
+
+.form-invitar {
+  display: flex;
+  gap: 10px;
+}
+
+.form-invitar input {
+  flex-grow: 1;
+  padding: 12px;
+  border: 1px solid #444;
+  background-color: #2a2d35;
+  color: white;
+  border-radius: 5px;
+  font-size: 1em;
+}
+
+.mensaje-feedback {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.mensaje-feedback.exito {
+  background-color: rgba(46, 204, 113, 0.2);
+  color: #2ecc71;
+  border: 1px solid #2ecc71;
+}
+
+.mensaje-feedback.error {
+  background-color: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
+}
+
+.lista-invitaciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-invitacion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #2a2d35;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #61dafb;
+}
+
+.info-invitacion {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.info-invitacion .email {
+  font-weight: bold;
+  color: white;
+}
+
+.info-invitacion .rol {
+  font-size: 0.85em;
+  color: #aaa;
+}
+
+.btn-cancelar {
+  background-color: #c0392b;
+  color: white;
+  font-size: 0.9em;
+}
+
+.btn-cancelar:hover {
+  background-color: #e74c3c;
+}
+
+/* =================================================================== */
+/* ESTILOS RESPONSIVE                                                  */
+/* =================================================================== */
+
+/* Para tablets y móviles (pantallas de menos de 900px) */
+@media (max-width: 900px) {
+  .container {
+    padding: 0 1rem; /* Menos padding lateral en pantallas pequeñas */
   }
 
-  /* Hacemos que los grids de formularios se pongan en una sola columna */
-  form > div {
-    grid-template-columns: 1fr !important;
+  .navbar {
+    padding: 1rem;
   }
 
-  /* Ajustamos la ficha del jugador para que sea vertical */
-  .player-card-normal-view {
-    flex-direction: column;
-    align-items: flex-start !important;
-    gap: 15px !important;
-  }
-
-  .player-card-normal-view > div:last-child {
-    text-align: left !important;
-    width: 100%;
-    display: flex;
-    gap: 10px;
-  }
-  
-  .player-card-normal-view > div:last-child button {
-    flex-grow: 1; /* Los botones ocupan todo el ancho disponible */
-  }
-
-  /* Hacemos que las columnas de eventos se pongan una encima de la otra */
-  .events-columns {
-    grid-template-columns: 1fr !important;
-  }
-
-  /* Hacemos que los gráficos del dashboard se pongan en una sola columna */
+  /* Cuadrícula del Dashboard a una sola columna */
   .dashboard-grid {
     grid-template-columns: 1fr !important;
   }
 }
 
-/* --- ESTILOS PARA LA PÁGINA DE LOGIN --- */
+/* Solo para móviles (pantallas de menos de 600px) */
+@media (max-width: 600px) {
+  .navbar {
+    flex-direction: column; /* Apila los enlaces y el usuario */
+    gap: 1rem;
+  }
 
-/* Contenedor que ocupa toda la pantalla y centra el contenido */
-.login-container {
+  .nav-links {
+    order: 2; /* Pone los enlaces debajo del usuario */
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .nav-user {
+    order: 1; /* Pone el usuario arriba */
+  }
+
+  /* Formularios de varias columnas a una sola */
+  form[style*="grid"] {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .form-invitar {
+    flex-direction: column;
+  }
+
+  /* Tarjeta de jugador en la plantilla */
+  .card-jugador-flex {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  
+  .card-jugador-flex > div:last-child {
+    width: 100%;
+    text-align: left !important;
+  }
+}
+
+/* Envoltorio para tablas anchas, permite scroll horizontal */
+.tabla-responsive-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabla-responsive-wrapper table {
+  width: 100%;
+  min-width: 650px; /* Ancho mínimo para forzar el scroll si es necesario */
+}
+
+/* =================================================================== */
+/* ESTILOS PARA LA PÁGINA DE PLANTILLA                                 */
+/* =================================================================== */
+
+/* Grid genérico para formularios */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.btn-full-width {
+  grid-column: 1 / -1; /* Ocupa todo el ancho del grid */
+}
+
+/* Contenedor principal de la tarjeta de jugador en vista normal */
+.card-jugador-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap; /* Permite que se apile en pantallas pequeñas */
+}
+
+.jugador-main-info {
+  flex: 3 1 300px; /* Crece más, base de 300px */
+}
+
+.jugador-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.jugador-media {
+  background: #4CAF50;
+  color: white;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  min-width: 70px;
+}
+
+.media-valor {
+  font-size: 1.8em;
+  font-weight: bold;
+}
+
+.media-label {
+  font-size: 0.8em;
+  text-transform: uppercase;
+}
+
+.jugador-subtitulo {
+  margin: 5px 0;
+  color: #ccc;
+}
+
+.stats-grid {
+  border-top: 1px solid #444;
+  margin-top: 15px;
+  padding-top: 15px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  color: #aaa;
+  font-size: 0.9em;
+}
+
+.jugador-secondary-info {
+  flex: 2 1 250px; /* Crece menos, base de 250px */
+  text-align: right;
+}
+
+.stats-linea {
+  color: #aaa;
+  font-size: 0.9em;
+  margin-bottom: 10px;
+}
+
+.action-buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start; /* Alinea los botones a la izquierda por defecto */
+}
+
+.jugador-secondary-info .action-buttons {
+  justify-content: flex-end; /* En la vista normal, los alinea a la derecha */
+}
+
+.btn-secondary {
+  background-color: #555;
+  color: white;
+}
+.btn-secondary:hover {
+  background-color: #666;
+}
+
+.btn-danger {
+  background-color: #c0392b;
+  color: white;
+}
+.btn-danger:hover {
+  background-color: #e74c3c;
+}
+
+.card-inner {
+  background: #2a2d35;
+  padding: 15px;
+  border-radius: 5px;
+  margin-top: 15px;
+}
+
+
+/* =================================================================== */
+/* ESTILOS PARA LAS PÁGINAS DE LOGIN Y REGISTRO (AUTH)                 */
+/* =================================================================== */
+
+/* Contenedor que centra la caja en toda la pantalla */
+.auth-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh; /* Ocupa toda la altura de la pantalla */
-  background-color: #282c34; /* Mismo fondo que el resto de la app */
-  padding: 20px;
+  min-height: 100vh;
+  padding: 1rem;
 }
 
-/* La caja blanca/gris del formulario */
-.login-box {
-  background-color: #3a3f4a;
-  padding: 40px;
+/* La caja principal del formulario */
+.auth-box {
+  background-color: #333742;
+  padding: 2.5rem;
   border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   width: 100%;
-  max-width: 400px; /* Ancho máximo del formulario */
+  max-width: 420px;
   text-align: center;
 }
 
-.login-box h2 {
+.auth-box h2 {
   margin-top: 0;
-  margin-bottom: 30px;
-  color: #fff;
+  margin-bottom: 1.5rem;
+  color: #f0f0f0;
+  font-size: 1.8em;
 }
 
-/* El formulario en sí */
-.login-box form {
+/* Mensaje de error */
+.auth-error {
+  background-color: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+}
+
+/* Formulario */
+.auth-box form {
   display: flex;
-  flex-direction: column; /* Apila los elementos verticalmente */
-  gap: 15px; /* Espacio entre los campos */
+  flex-direction: column;
+  gap: 1.2rem;
+  text-align: left;
 }
 
-/* Estilos para los campos de texto (email, contraseña) */
-.login-box input {
-  width: 100%;
-  padding: 15px;
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group label {
+  margin-bottom: 0.5rem;
+  font-size: 0.9em;
+  color: #ccc;
+}
+
+.input-group input {
+  padding: 14px;
   border: 1px solid #555;
   background-color: #282c34;
   color: #fff;
   border-radius: 5px;
   font-size: 1em;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-/* Estilos para el botón principal */
-.login-box form button {
+.input-group input:focus {
+  outline: none;
+  border-color: #61dafb;
+  box-shadow: 0 0 0 3px rgba(97, 218, 251, 0.3);
+}
+
+/* Botón principal del formulario */
+.btn-auth-primary {
   padding: 15px;
+  margin-top: 0.5rem;
+  background-color: #61dafb;
+  color: #20232a;
+  font-weight: bold;
+  font-size: 1.1em;
   border: none;
   border-radius: 5px;
-  background-color: #61dafb;
-  color: #282c34;
-  font-weight: bold;
-  font-size: 1em;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
-.login-box form button:hover {
+.btn-auth-primary:hover {
   background-color: #88eaff;
 }
 
-/* Estilos para el botón secundario (cambiar entre login/registro) */
-.toggle-auth {
-  background: none;
-  border: none;
-  color: #61dafb;
-  cursor: pointer;
-  margin-top: 25px;
-  padding: 10px;
+/* Pie del formulario con enlaces secundarios */
+.auth-footer {
+  margin-top: 2rem;
   font-size: 0.9em;
+  color: #aaa;
+}
+
+.auth-footer a {
+  color: #61dafb;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+.auth-footer p {
+  margin: 0.5rem 0;
 }

@@ -1,44 +1,122 @@
-// src/context/AuthContext.jsx
+// src/context/AuthContext.jsx - VERSIÓN FINAL A PRUEBA DE FALLOS
 
-import { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from '../firebase'; // Nos aseguramos de importar 'auth' desde el lugar correcto
-import { onAuthStateChanged } from 'firebase/auth';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { auth, db } from '../firebase';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from 'firebase/auth';
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  limit,
+  writeBatch
+} from 'firebase/firestore';
 
-// 1. Creamos el contexto
 const AuthContext = createContext();
 
-// 2. Creamos un "hook" personalizado para usar el contexto fácilmente
 export function useAuth() {
   return useContext(AuthContext);
 }
 
-// 3. Creamos el componente "Proveedor" que envolverá nuestra aplicación
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true); // ¡ESTADO DE CARGA! Clave para evitar la pantalla en blanco.
+  const [loading, setLoading] = useState(true);
+
+  // --- ¡¡¡NUEVA FUNCIÓN DE REGISTRO CON LÓGICA CORREGIDA!!! ---
+  async function signup(email, password) {
+    try {
+      // PASO 1: Intentar crear el usuario en Firebase Authentication PRIMERO.
+      // Si este paso falla (ej. email ya existe), saltará al 'catch' y no continuará.
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // PASO 2: Si la creación en Auth fue exitosa, procedemos con la lógica de Firestore.
+      const userDocRef = doc(db, 'usuarios', user.uid);
+
+      // PASO 3: Buscar si existe una invitación para este email.
+      const invitacionesRef = collection(db, 'invitaciones');
+      const q = query(invitacionesRef, where('email', '==', email.toLowerCase()), limit(1));
+      const invitacionSnapshot = await getDocs(q);
+
+      if (!invitacionSnapshot.empty) {
+        // CASO A: SÍ HAY INVITACIÓN
+        const invitacionDoc = invitacionSnapshot.docs[0];
+        const datosInvitacion = invitacionDoc.data();
+
+        // Creamos el documento del usuario con los datos de la invitación.
+        await setDoc(userDocRef, {
+          email: user.email,
+          rol: datosInvitacion.rol,
+          teamId: datosInvitacion.teamId,
+        });
+
+        // Borramos la invitación para que no se pueda volver a usar.
+        const batch = writeBatch(db);
+        batch.delete(invitacionDoc.ref);
+        await batch.commit();
+
+      } else {
+        // CASO B: NO HAY INVITACIÓN (comportamiento original)
+        // El nuevo usuario es administrador de su propio equipo.
+        await setDoc(userDocRef, {
+          email: user.email,
+          rol: 'administrador',
+          teamId: user.uid,
+        });
+      }
+      // La función termina con éxito. onAuthStateChanged se encargará de loguear al usuario.
+
+    } catch (error) {
+      // Si llegamos aquí, es porque createUserWithEmailAndPassword falló.
+      // Relanzamos el error para que el componente de Registro pueda mostrar el mensaje.
+      console.error("Error en el proceso de signup:", error.code, error.message);
+      throw error;
+    }
+  }
+
+  function login(email, password) {
+    return signInWithEmailAndPassword(auth, email, password);
+  }
+
+  function logout() {
+    return signOut(auth);
+  }
 
   useEffect(() => {
-    // onAuthStateChanged es un "oyente" de Firebase.
-    // Se ejecuta cuando el componente se monta y cada vez que el estado de autenticación cambia (login/logout).
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      setCurrentUser(user); // Si el usuario está logueado, 'user' tendrá sus datos. Si no, será 'null'.
-      setLoading(false); // Una vez que sabemos si hay usuario o no, dejamos de cargar.
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userDocRef = doc(db, 'usuarios', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          setCurrentUser({ ...user, ...userDoc.data() });
+        } else {
+          // Esto puede pasar si el documento de Firestore aún no se ha creado.
+          // Damos un pequeño margen o simplemente usamos el usuario de Auth.
+          setCurrentUser(user);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      setLoading(false);
     });
-
-    // Cuando el componente se desmonte, nos "desuscribimos" del oyente para evitar fugas de memoria.
     return unsubscribe;
-  }, []); // El array vacío asegura que esto solo se ejecute una vez, al montar el componente.
+  }, []);
 
-  // El valor que compartiremos con toda la aplicación
   const value = {
     currentUser,
-    setCurrentUser, // Lo exportamos por si lo necesitamos en el Login
-    loading // ¡Añadimos el estado de carga al valor del contexto!
+    signup,
+    login,
+    logout,
   };
 
-  // Mientras estamos comprobando si el usuario está logueado, mostramos un mensaje de "Cargando...".
-  // ¡ESTO EVITA LA PANTALLA EN BLANCO!
-  // Solo cuando 'loading' es falso, mostramos los 'children' (el resto de la aplicación).
   return (
     <AuthContext.Provider value={value}>
       {!loading && children}

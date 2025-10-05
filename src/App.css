@@ -40,3 +40,70 @@
 .read-the-docs {
   color: #888;
 }
+
+
+/* ====================================== */
+/* ESTILOS PARA LA BARRA DE NAVEGACIÓN    */
+/* ====================================== */
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #20232a; /* Un gris oscuro más acorde a tu paleta */
+  border-bottom: 1px solid #444;
+  margin-bottom: 2rem;
+}
+
+.nav-links {
+  display: flex;
+  gap: 0.5rem; /* Espacio entre los enlaces */
+}
+
+.nav-links a {
+  color: #ccc;
+  text-decoration: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  transition: background-color 0.2s, color 0.2s;
+  font-weight: 500;
+}
+
+.nav-links a:hover {
+  background-color: #333;
+  color: white;
+}
+
+/* Estilo especial para el enlace de la página activa */
+.nav-links a.active {
+  background-color: #61dafb; /* Color de acento */
+  color: #20232a;
+  font-weight: bold;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem; /* Más espacio entre el email y el botón */
+}
+
+.user-email {
+  color: #aaa;
+  font-size: 0.9em;
+}
+
+.logout-button {
+  background-color: #c0392b;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.logout-button:hover {
+  background-color: #e74c3c;
+}
