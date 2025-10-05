@@ -15,7 +15,6 @@ body {
 }
 
 /* Contenedor principal de la aplicación */
-/* En lugar de #root, usamos una clase para tener más control */
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -34,7 +33,7 @@ h1, h2, h3, h4, h5, h6 {
   padding: 2rem;
   border-radius: 8px;
   margin-bottom: 20px;
-  text-align: left; /* Alineamos el texto a la izquierda por defecto en las tarjetas */
+  text-align: left;
 }
 
 /* Botones genéricos */
@@ -118,6 +117,106 @@ button:active {
 }
 
 /* =================================================================== */
+/* PÁGINAS DE LOGIN Y REGISTRO (AUTH)                                  */
+/* =================================================================== */
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.auth-box {
+  background-color: #333742;
+  padding: 2.5rem;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+.auth-box h2 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #f0f0f0;
+  font-size: 1.8em;
+}
+
+.auth-error {
+  background-color: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 1rem;
+}
+
+.auth-box form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  text-align: left;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group label {
+  margin-bottom: 0.5rem;
+  font-size: 0.9em;
+  color: #ccc;
+}
+
+.input-group input,
+select {
+  padding: 14px;
+  border: 1px solid #555;
+  background-color: #282c34;
+  color: #fff;
+  border-radius: 5px;
+  font-size: 1em;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-group input:focus,
+select:focus {
+  outline: none;
+  border-color: #61dafb;
+  box-shadow: 0 0 0 3px rgba(97, 218, 251, 0.3);
+}
+
+.btn-auth-primary {
+  padding: 15px;
+  margin-top: 0.5rem;
+  font-size: 1.1em;
+}
+
+.auth-footer {
+  margin-top: 2rem;
+  font-size: 0.9em;
+  color: #aaa;
+}
+
+.auth-footer a {
+  color: #61dafb;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+.auth-footer p {
+  margin: 0.5rem 0;
+}
+
+/* =================================================================== */
 /* PÁGINA DE CONFIGURACIÓN                                             */
 /* =================================================================== */
 
@@ -128,12 +227,6 @@ button:active {
 
 .form-invitar input {
   flex-grow: 1;
-  padding: 12px;
-  border: 1px solid #444;
-  background-color: #2a2d35;
-  color: white;
-  border-radius: 5px;
-  font-size: 1em;
 }
 
 .mensaje-feedback {
@@ -198,79 +291,9 @@ button:active {
 }
 
 /* =================================================================== */
-/* ESTILOS RESPONSIVE                                                  */
+/* PÁGINA DE PLANTILLA                                                 */
 /* =================================================================== */
 
-/* Para tablets y móviles (pantallas de menos de 900px) */
-@media (max-width: 900px) {
-  .container {
-    padding: 0 1rem; /* Menos padding lateral en pantallas pequeñas */
-  }
-
-  .navbar {
-    padding: 1rem;
-  }
-
-  /* Cuadrícula del Dashboard a una sola columna */
-  .dashboard-grid {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-/* Solo para móviles (pantallas de menos de 600px) */
-@media (max-width: 600px) {
-  .navbar {
-    flex-direction: column; /* Apila los enlaces y el usuario */
-    gap: 1rem;
-  }
-
-  .nav-links {
-    order: 2; /* Pone los enlaces debajo del usuario */
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .nav-user {
-    order: 1; /* Pone el usuario arriba */
-  }
-
-  /* Formularios de varias columnas a una sola */
-  form[style*="grid"] {
-    grid-template-columns: 1fr !important;
-  }
-  
-  .form-invitar {
-    flex-direction: column;
-  }
-
-  /* Tarjeta de jugador en la plantilla */
-  .card-jugador-flex {
-    flex-direction: column;
-    align-items: flex-start !important;
-  }
-  
-  .card-jugador-flex > div:last-child {
-    width: 100%;
-    text-align: left !important;
-  }
-}
-
-/* Envoltorio para tablas anchas, permite scroll horizontal */
-.tabla-responsive-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.tabla-responsive-wrapper table {
-  width: 100%;
-  min-width: 650px; /* Ancho mínimo para forzar el scroll si es necesario */
-}
-
-/* =================================================================== */
-/* ESTILOS PARA LA PÁGINA DE PLANTILLA                                 */
-/* =================================================================== */
-
-/* Grid genérico para formularios */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -279,20 +302,19 @@ button:active {
 }
 
 .btn-full-width {
-  grid-column: 1 / -1; /* Ocupa todo el ancho del grid */
+  grid-column: 1 / -1;
 }
 
-/* Contenedor principal de la tarjeta de jugador en vista normal */
 .card-jugador-flex {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: 20px;
-  flex-wrap: wrap; /* Permite que se apile en pantallas pequeñas */
+  flex-wrap: wrap;
 }
 
 .jugador-main-info {
-  flex: 3 1 300px; /* Crece más, base de 300px */
+  flex: 3 1 300px;
 }
 
 .jugador-header {
@@ -338,7 +360,7 @@ button:active {
 }
 
 .jugador-secondary-info {
-  flex: 2 1 250px; /* Crece menos, base de 250px */
+  flex: 2 1 250px;
   text-align: right;
 }
 
@@ -346,17 +368,20 @@ button:active {
   color: #aaa;
   font-size: 0.9em;
   margin-bottom: 10px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .action-buttons {
   margin-top: 20px;
   display: flex;
   gap: 10px;
-  justify-content: flex-start; /* Alinea los botones a la izquierda por defecto */
+  justify-content: flex-start;
 }
 
 .jugador-secondary-info .action-buttons {
-  justify-content: flex-end; /* En la vista normal, los alinea a la derecha */
+  justify-content: flex-end;
 }
 
 .btn-secondary {
@@ -382,118 +407,269 @@ button:active {
   margin-top: 15px;
 }
 
-
 /* =================================================================== */
-/* ESTILOS PARA LAS PÁGINAS DE LOGIN Y REGISTRO (AUTH)                 */
+/* PÁGINA DETALLE DE EVENTO                                            */
 /* =================================================================== */
 
-/* Contenedor que centra la caja en toda la pantalla */
-.auth-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  padding: 1rem;
+.botones-vista-evento {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  border-bottom: 1px solid #444;
+  margin-bottom: 20px;
 }
 
-/* La caja principal del formulario */
-.auth-box {
-  background-color: #333742;
-  padding: 2.5rem;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+.tabla-responsive-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabla-responsive-wrapper table {
   width: 100%;
-  max-width: 420px;
+  min-width: 650px;
+}
+
+.tabla-responsive-wrapper th,
+.tabla-responsive-wrapper td {
+  padding: 8px 5px;
+  min-width: 45px;
   text-align: center;
 }
 
-.auth-box h2 {
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  color: #f0f0f0;
-  font-size: 1.8em;
-}
-
-/* Mensaje de error */
-.auth-error {
-  background-color: rgba(231, 76, 60, 0.2);
-  color: #e74c3c;
-  border: 1px solid #e74c3c;
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 1rem;
-}
-
-/* Formulario */
-.auth-box form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
+.tabla-responsive-wrapper th:first-child,
+.tabla-responsive-wrapper td:first-child {
+  min-width: 120px;
   text-align: left;
+  font-weight: bold;
 }
 
-.input-group {
+/* =================================================================== */
+/* ESTILOS RESPONSIVE (MEDIA QUERIES)                                  */
+/* =================================================================== */
+
+/* Para tablets y móviles (pantallas de menos de 900px) */
+@media (max-width: 900px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  .navbar {
+    padding: 1rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Solo para móviles (pantallas de menos de 600px) */
+@media (max-width: 600px) {
+  .navbar {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .nav-links {
+    order: 2;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .nav-user {
+    order: 1;
+  }
+
+  .form-grid,
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .form-invitar {
+    flex-direction: column;
+  }
+
+  .card-jugador-flex {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  
+  .jugador-secondary-info {
+    width: 100%;
+    text-align: left !important;
+  }
+
+  .jugador-secondary-info .action-buttons {
+    justify-content: flex-start;
+  }
+}
+
+/* Para pantallas muy estrechas (ej. iPhone SE) */
+@media (max-width: 380px) {
+  .botones-vista-evento {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =================================================================== */
+/* NUEVO DISEÑO PARA PÁGINA DE PLANTILLA                               */
+/* =================================================================== */
+
+/* Un grid que se adapta automáticamente */
+.plantilla-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.card-jugador {
+  background: #333742;
+  border-radius: 8px;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
+  gap: 1rem;
 }
 
-.input-group label {
-  margin-bottom: 0.5rem;
+.card-jugador-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.jugador-identidad h3 {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.jugador-identidad p {
+  margin: 0.25rem 0 0;
   font-size: 0.9em;
   color: #ccc;
 }
 
-.input-group input {
-  padding: 14px;
-  border: 1px solid #555;
-  background-color: #282c34;
-  color: #fff;
-  border-radius: 5px;
-  font-size: 1em;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.input-group input:focus {
-  outline: none;
-  border-color: #61dafb;
-  box-shadow: 0 0 0 3px rgba(97, 218, 251, 0.3);
-}
-
-/* Botón principal del formulario */
-.btn-auth-primary {
-  padding: 15px;
-  margin-top: 0.5rem;
-  background-color: #61dafb;
-  color: #20232a;
+.jugador-media-global {
+  background-color: #4CAF50;
+  color: white;
+  font-size: 1.4em;
   font-weight: bold;
-  font-size: 1.1em;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+  min-width: 50px;
+  text-align: center;
 }
 
-.btn-auth-primary:hover {
-  background-color: #88eaff;
+.card-jugador-body {
+  border-top: 1px solid #444;
+  border-bottom: 1px solid #444;
+  padding: 1rem 0;
 }
 
-/* Pie del formulario con enlaces secundarios */
-.auth-footer {
-  margin-top: 2rem;
-  font-size: 0.9em;
+.jugador-stats-principales {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.jugador-stats-principales div {
+  font-size: 0.8em;
   color: #aaa;
 }
 
-.auth-footer a {
-  color: #61dafb;
-  text-decoration: none;
+.jugador-stats-principales div span {
+  display: block;
+  font-size: 1.6em;
   font-weight: bold;
+  color: white;
 }
 
-.auth-footer a:hover {
-  text-decoration: underline;
+.jugador-stats-secundarias {
+  text-align: center;
+  font-size: 0.9em;
+  color: #ccc;
 }
 
-.auth-footer p {
-  margin: 0.5rem 0;
+.card-jugador-footer {
+  display: flex;
+  gap: 10px;
+}
+
+/* =================================================================== */
+/* ESTILOS ADICIONALES PARA DETALLE DE EVENTO                          */
+/* =================================================================== */
+
+.convocatoria-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.lista-jugadores-convocatoria {
+  border: 1px solid #444;
+  border-radius: 5px;
+  padding: 10px;
+  min-height: 200px;
+}
+
+.item-jugador {
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  background: #444;
+}
+
+.item-jugador.convocado {
+  background: #5cb85c;
+}
+
+.item-jugador.clickable {
+  cursor: pointer;
+}
+
+.marcador-final {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  font-size: 2em;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.form-resultado-partido {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+}
+
+.form-resultado-partido .input-group input {
+  width: 80px;
+  padding: 10px;
+  font-size: 1.2em;
+  text-align: center;
+}
+
+.form-resultado-partido > span {
+  font-size: 1.5em;
+  margin-top: 1.5rem; /* Alinea el guión con los inputs */
+}
+
+.btn-danger-outline {
+  background: transparent;
+  color: #c0392b;
+  border: 1px solid #c0392b;
+}
+.btn-danger-outline:hover {
+  background: #c0392b;
+  color: white;
+}
+
+/* Media query para apilar la convocatoria en móviles */
+@media (max-width: 600px) {
+  .convocatoria-grid {
+    grid-template-columns: 1fr;
+  }
 }
